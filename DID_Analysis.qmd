@@ -31,22 +31,38 @@ data <- read.csv('data_retail_info_final.csv')
 Add cutoff dates and assign treatment
 
 ```{r}
-cutoff_date <- ('2020-02-01')
+cutoff_date <- ('2020-03-01')
 
 data <- data%>%
   mutate(covid = data$date > cutoff_date)
+
+data <- data%>%
+  filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780'))))
+
 ```
 
 ```{r}
 data <- data %>%
   group_by(indname, date) %>%
   mutate(no_employed = sum(EMPSTAT == 10, na.rm = TRUE))
+
+
+
+data<- data%>%
+  group_by(indname)%>%
+  mutate(employment_standard = ((no_employed - mean(no_employed[covid == FALSE]))/sd(no_employed[covid == FALSE])))
+
+
+  
 data_retail <- data %>%
   filter(indname == 'Retail Trade')
+
+data_info <- data %>%
+  filter(indname == 'Information')
 ```
 
 ```{r}
-did <- feols(no_employed ~ covid, data = data_retail)
+did <- feols(employment_standard ~ covid, data = data_retail)
 
 etable(did)
 ```
@@ -58,7 +74,8 @@ In the presence of Covid, the number of retail shrank by roughly 14% as measured
 Between March of 2017 and April of 2022, the presence of Covid was associated with a 14% reduction in employment in the retail trade.
 
 ```{r}
-did1 <- feols(no_employed ~ indname + covid + indname * covid, data = data)
+did1 <- feols(employment_standard ~ indname + covid + indname * covid, data = data)
+
 etable(did1)
 ```
 
@@ -74,6 +91,12 @@ The coefficient on indnameRetailTrade X coditTRUE is the differnce in difference
 data_info <- data%>%
   filter(indname == 'Information')
 
-did2 <- feols(no_employed ~ covid, data = data_info)
+did2 <- feols(employment_standard ~ covid, data = data_info)
 etable(did2)
 ```
+
+"By September of 2022, Amazon [(AMZN)](https://money.cnn.com/quote/quote.html?symb=AMZN&source=story_quote_link) had more than doubled its corporate staff compared to the same month in 2019, hiring more than half a million additional workers and vastly expanding its warehouse footprint. Meta [nearly doubled](https://www.cnn.com/2022/11/10/tech/tech-layoffs-analysis/index.html) its headcount between March 2020 and September of last year. Microsoft [(MSFT)](https://money.cnn.com/quote/quote.html?symb=MSFT&source=story_quote_link) and Google [(GOOGL GOOGLE)](https://money.cnn.com/quote/quote.html?symb=GOOGL%20GOOGLE&source=story_quote_link) also hired thousands of additional workers, as did other tech firms like Salesforce [(CRM)](https://money.cnn.com/quote/quote.html?symb=CRM&source=story_quote_link), Snap [(SNAP)](https://money.cnn.com/quote/quote.html?symb=SNAP&source=story_quote_link) and Twitter, all of which have announced layoffs in recent weeks, too"
+
+cnn says this. We should be finding this
+
+Notes; Interrupted time series type for rdd with date as running var centered on march first.
