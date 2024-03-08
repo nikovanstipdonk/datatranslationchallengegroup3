@@ -1,0 +1,79 @@
+---
+title: "DID analysis for Data Translation challenge"
+author: "Kian"
+format: docx
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Libraries
+
+```{r}
+library(rio)
+library(tidyverse)
+library(vtable)
+library(dplyr)
+library(lubridate)
+library(fixest)
+library(ggplot2)
+```
+
+Read in Cleaned Data
+
+```{r}
+data <- read.csv('data_retail_info_final.csv')
+
+```
+
+Add cutoff dates and assign treatment
+
+```{r}
+cutoff_date <- ('2020-02-01')
+
+data <- data%>%
+  mutate(covid = data$date > cutoff_date)
+```
+
+```{r}
+data <- data %>%
+  group_by(indname, date) %>%
+  mutate(no_employed = sum(EMPSTAT == 10, na.rm = TRUE))
+data_retail <- data %>%
+  filter(indname == 'Retail Trade')
+```
+
+```{r}
+did <- feols(no_employed ~ covid, data = data_retail)
+
+etable(did)
+```
+
+Prior to covid the average number of emplyees in the reatils were 3,685.4 per month. But with the presese of covid the number of emplyess per month droped by 517 people.
+
+In the presence of Covid, the number of retail shrank by roughly 14% as measured by employment.
+
+Between March of 2017 and April of 2022, the presence of Covid was associated with a 14% reduction in employment in the retail trade.
+
+```{r}
+did1 <- feols(no_employed ~ indname + covid + indname * covid, data = data)
+etable(did1)
+```
+
+The constant is the mean number of employees in the information secotr prior to covid
+
+The coeeficient on indnameRetail Trade is the differnce between the number of employees in the retail trade and the information sector prior to covid
+
+The coefficient on covidTrue is the change in no_employees in the information sector caused by covid.
+
+The coefficient on indnameRetailTrade X coditTRUE is the differnce in difference between the change in the retail sector and the change in the information sector. IE: the retail secotr lost 413 more jobs due to covid than the information sector did.
+
+```{r}
+data_info <- data%>%
+  filter(indname == 'Information')
+
+did2 <- feols(no_employed ~ covid, data = data_info)
+etable(did2)
+```
