@@ -62,7 +62,7 @@ data_info <- data %>%
 ```
 
 ```{r}
-did <- feols(employment_standard ~ covid, data = data_retail)
+did <- feols(log(no_employed) ~ covid, data = data_retail)
 
 etable(did)
 ```
@@ -74,7 +74,7 @@ In the presence of Covid, the number of retail shrank by roughly 14% as measured
 Between March of 2017 and April of 2022, the presence of Covid was associated with a 14% reduction in employment in the retail trade.
 
 ```{r}
-did1 <- feols(employment_standard ~ indname + covid + indname * covid, data = data)
+did1 <- feols(log(no_employed) ~ indname + covid + indname * covid, data = data)
 
 etable(did1)
 ```
@@ -87,11 +87,15 @@ The coefficient on covidTrue is the change in no_employees in the information se
 
 The coefficient on indnameRetailTrade X coditTRUE is the differnce in difference between the change in the retail sector and the change in the information sector. IE: the retail secotr lost 413 more jobs due to covid than the information sector did.
 
+**new with logged emoloyees**
+
+The coeffiecient on IndnameRetailTrade X covidTrue is
+
 ```{r}
 data_info <- data%>%
   filter(indname == 'Information')
 
-did2 <- feols(employment_standard ~ covid, data = data_info)
+did2 <- feols(log(no_employed) ~ covid, data = data_info)
 etable(did2)
 ```
 
