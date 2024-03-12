@@ -67,7 +67,9 @@ did <- feols(log(no_employed) ~ covid, data = data_retail)
 etable(did)
 ```
 
-Prior to covid the average number of emplyees in the reatils were 3,685.4 per month. But with the presese of covid the number of emplyess per month droped by 517 people.
+CORRECT: In the presence of Covid, there is a 27% decrease in the log number of employees in the retail industry.
+
+Prior to covid the average number of emplyees in the retail were 3,685.4 per month. But with the presence of covid the number of employees per month dropped by 517 people.
 
 In the presence of Covid, the number of retail shrank by roughly 14% as measured by employment.
 
@@ -79,17 +81,7 @@ did1 <- feols(log(no_employed) ~ indname + covid + indname * covid, data = data)
 etable(did1)
 ```
 
-The constant is the mean number of employees in the information secotr prior to covid
-
-The coeeficient on indnameRetail Trade is the differnce between the number of employees in the retail trade and the information sector prior to covid
-
-The coefficient on covidTrue is the change in no_employees in the information sector caused by covid.
-
-The coefficient on indnameRetailTrade X coditTRUE is the differnce in difference between the change in the retail sector and the change in the information sector. IE: the retail secotr lost 413 more jobs due to covid than the information sector did.
-
-**new with logged emoloyees**
-
-The coeffiecient on IndnameRetailTrade X covidTrue is
+The presence of covid is associate with a 8.01% greater drop in employment for the retail industry than for the information services industry.
 
 ```{r}
 data_info <- data%>%
@@ -99,8 +91,6 @@ did2 <- feols(log(no_employed) ~ covid, data = data_info)
 etable(did2)
 ```
 
-"By September of 2022, Amazon [(AMZN)](https://money.cnn.com/quote/quote.html?symb=AMZN&source=story_quote_link) had more than doubled its corporate staff compared to the same month in 2019, hiring more than half a million additional workers and vastly expanding its warehouse footprint. Meta [nearly doubled](https://www.cnn.com/2022/11/10/tech/tech-layoffs-analysis/index.html) its headcount between March 2020 and September of last year. Microsoft [(MSFT)](https://money.cnn.com/quote/quote.html?symb=MSFT&source=story_quote_link) and Google [(GOOGL GOOGLE)](https://money.cnn.com/quote/quote.html?symb=GOOGL%20GOOGLE&source=story_quote_link) also hired thousands of additional workers, as did other tech firms like Salesforce [(CRM)](https://money.cnn.com/quote/quote.html?symb=CRM&source=story_quote_link), Snap [(SNAP)](https://money.cnn.com/quote/quote.html?symb=SNAP&source=story_quote_link) and Twitter, all of which have announced layoffs in recent weeks, too"
-
-cnn says this. We should be finding this
+The presence of Covid is associated with a 19.01% drop in employment in the information industry.
 
 Notes; Interrupted time series type for rdd with date as running var centered on march first.
