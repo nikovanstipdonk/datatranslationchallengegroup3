@@ -24,7 +24,7 @@ library(ggplot2)
 Read in Cleaned Data
 
 ```{r}
-data <- read.csv('data/retail_info_final.csv')
+info_retail_data <- read.csv('data/retail_info_final.csv')
 
 
 ```
@@ -34,59 +34,52 @@ Add cutoff dates and assign treatment
 ```{r}
 cutoff_date <- ('2020-03-01')
 
-data <- data%>%
-  mutate(covid = data$date > cutoff_date)
+info_retail_data <- info_retail_data%>%
+  mutate(covid = info_retail_data$date > cutoff_date)
 
-data_ready <- data%>%
+info_retail_data <- info_retail_data%>%
   filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780'))))
 
 ```
 
 ```{r}
-data <- data_ready %>%
+info_retail_data <-info_retail_data %>%
   group_by(indname, date, covid) %>%
   summarize(no_employed = sum(EMPSTAT == 10, na.rm = TRUE))
 
 
 
+
+
   
-data_retail <- data %>%
+data_retail_v_info <- info_retail_data %>%
   filter(indname == 'Retail Trade')
 
-data_info <- data %>%
+data_info_v_retail <- info_retail_data %>%
   filter(indname == 'Information')
 ```
 
 ```{r}
-did <- feols(log(no_employed) ~ covid, data = data_retail)
+retail_health <- feols(log(no_employed) ~ covid, data = data_retail_v_info)
 
-etable(did)
+etable(retail_health)
 ```
 
-CORRECT: In the presence of Covid, there is a 27% decrease in the log number of employees in the retail industry.
-
-Prior to covid the average number of emplyees in the retail were 3,685.4 per month. But with the presence of covid the number of employees per month dropped by 517 people.
-
-In the presence of Covid, the number of retail shrank by roughly 14% as measured by employment.
-
-Between March of 2017 and April of 2022, the presence of Covid was associated with a 14% reduction in employment in the retail trade.
+CORRECT: In the presence of Covid, there is a 19.18% decrease in the log number of employees in the retail industry.
 
 ```{r}
-did1 <- feols(log(no_employed) ~ indname + covid + indname * covid, data = data)
+r_v_i_health <- feols(log(no_employed) ~ indname + covid + indname * covid, data = info_retail_data)
 
-etable(did1)
+etable(r_v_i_health)
 ```
 
-The presence of covid is associate with a 8.01% greater drop in employment for the retail industry than for the information services industry.
+The presence of covid is associated with a 7.92% greater drop in employment for the retail industry than for the information services industry.
 
 ```{r}
-data_info <- data%>%
-  filter(indname == 'Information')
-
-did2 <- feols(log(no_employed) ~ covid, data = data_info)
-etable(did2)
+info_health <- feols(log(no_employed) ~ covid, data = data_info_v_retail)
+etable(info_health)
 ```
 
-The presence of Covid is associated with a 19.01% drop in employment in the information industry.
+The presence of Covid is associated with a 11.26% drop in employment in the information industry.
 
 Notes; Interrupted time series type for rdd with date as running var centered on march first.
