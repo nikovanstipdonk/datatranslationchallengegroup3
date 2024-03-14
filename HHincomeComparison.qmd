@@ -83,14 +83,7 @@ reg_high_info<-
 
 etable(reg_low_info, reg_mid_info, reg_high_info)
 
-'reg_low_info_cont <- 
-  feols(Low ~ covid + indname + covid*indname | STATECENSUS, data = data_info_finc)
-reg_mid_info_cont<-
-  feols(Middle ~ covid + indname + covid*indname | STATECENSUS , data = data_info_finc)
-reg_high_info_cont<-
-  feols(High ~ covid + indname + covid*indname | STATECENSUS , data = data_info_finc)
 
-etable(reg_low_info_cont,reg_mid_info_cont,reg_high_info_cont)'
 
 ```
 
@@ -109,11 +102,7 @@ reg_high_finance <- feols(High ~ covid + indname + covid*indname, data = data_fi
 
 etable(reg_low_finance, reg_mid_finance, reg_high_finance)
 
-'reg_low_finance_cont <- feols(Low ~ covid + indname + covid*indname | STATECENSUS, data = data_finance_finc)
-reg_mid_finance_cont <- feols(Middle ~ covid + indname + covid*indname| STATECENSUS, data = data_finance_finc)
-reg_high_finance_cont <- feols(High ~ covid + indname + covid*indname| STATECENSUS, data = data_finance_finc)
 
-etable(reg_low_finance_cont, reg_mid_finance_cont, reg_high_finance_cont)'
 ```
 
 In the presence of covid the retail employees are 1.3% less likeley to be in the low income bracket compared to the Finance Industry. Low income here is defined as a family income less than \$30,000.
@@ -123,34 +112,25 @@ In the presence of covid the retail employees are 1.0% higher chance of being in
 In the presence of covid the retail employees are 1.6% higher chance of being in the middle income bracket compared to the information industry. Middle income here is defined as a family income greater than \$75,000.
 
 ```{r}
-fin_reg_high <- feols(no_high ~ covid + indname + covid * indname, data = counts_fin)
-'fin_reg_high_controlled <- feols(log(no_high) ~ covid + indname + covid * indname| STATECENSUS, data = counts_fin)'
+fin_reg_high <- feols(log(no_high) ~ covid + indname + covid * indname, data = counts_fin)
 
 info_reg_high <- feols(log(no_high) ~ covid + indname + covid * indname, data = counts_info)
-'info_reg_high_controlled <- feols(log(no_high) ~ covid + indname + covid * indname| STATECENSUS, data = counts_info)'
+
+fin_reg_mid <- feols(log(no_mid) ~ covid + indname + covid * indname, data = counts_fin)
+
+info_reg_mid <- feols(log(no_mid) ~ covid + indname + covid * indname, data = counts_info)
+
+fin_reg_low <- feols(log(no_low) ~ covid + indname + covid * indname, data = counts_fin)
+
+info_reg_low <- feols(log(no_low) ~ covid + indname + covid * indname, data = counts_info)
+
+
+
 etable(fin_reg_high, info_reg_high) 
-'etable(fin_reg_high_controlled, info_reg_high_controlled)'
+etable(fin_reg_mid, info_reg_mid) 
+etable(fin_reg_low, info_reg_low) 
+
 
 ```
 
 Controling for State, in the presence of covid, the change in the number of high earners in the retail trade
-
-```{r}
-fin_reg_mid <- feols(no_mid ~ covid + indname + covid * indname, data = counts_fin)
-'fin_reg_mid_controlled <- feols(log(no_high) ~ covid + indname + covid * indname| STATECENSUS, data = counts_fin)'
-
-info_reg_mid <- feols(log(no_mid) ~ covid + indname + covid * indname, data = counts_info)
-'info_reg_mid_controlled <- feols(log(no_mid) ~ covid + indname + covid * indname| STATECENSUS, data = counts_info)'
-etable(fin_reg_mid, info_reg_mid) 
-'etable(fin_reg_mid_controlled, info_reg_mid_controlled)'
-```
-
-```{r}
-fin_reg_low <- feols(no_low ~ covid + indname + covid * indname, data = counts_fin)
-'fin_reg_low_controlled <- feols(no_low ~ covid + indname + covid * indname| STATECENSUS, data = counts_fin)'
-
-info_reg_low <- feols(log(no_low) ~ covid + indname + covid * indname, data = counts_info)
-'info_reg_low_controlled <- feols(no_low ~ covid + indname + covid * indname| STATECENSUS, data = counts_info)'
-etable(fin_reg_low, info_reg_low) 
-'etable(fin_reg_low_controlled, info_reg_low_controlled)'
-```
