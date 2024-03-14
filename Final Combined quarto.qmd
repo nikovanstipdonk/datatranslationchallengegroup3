@@ -8,7 +8,7 @@ editor: visual
 
 Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
-## Running Code
+## Retail Vs. Real Estate and Finance
 
 When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
@@ -23,53 +23,148 @@ library(ggplot2)
 
 ```
 
-You can add options to executable code like this
+Loading in Libraries.
 
 ```{r}
-data_finance <- read.csv('data/retail_FIRR_final.csv')
+data_finance <- read.csv('dataFinalFIRR.csv')
 
 ```
+
+Reading in the Retail vs Finance Data.
 
 ```{r}
 cutoff_date <- ('2020-03-01')
 
-data_finance <- data_finance %>%
+data_finance_covid <- data_finance %>%
   mutate(covid = data_finance$date > cutoff_date)
 
-data_finance <- data_finance%>%
+data_finance <- data_finance_covid%>%
   filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780', '7080', '7181', '7190'))))
 ```
 
+Filtering out the Rental Real Estate jobs, as the assumption is that rental based real estate dropped drastically as people fled the cities due to shutdowns. We also saw that house prices rose substantially during the pandemic so the assumption is that people who lost their jobs in other sectors may be inclined to try real estate. We also decided to include typical finance as it is a highly paid industry that theoretically could handle remote work quite well.
+
 ```{r}
-data_finance <- data_finance %>%
-  group_by(indname, date) %>%
-  mutate(no_employed = sum(EMPSTAT == 10, na.rm = TRUE))
-data_only_finance <- data_finance %>%
+data_finance_retail_no_jobs <- data_finance %>%
+  group_by(indname, date, covid) %>%
+  summarize(no_employed = sum(EMPSTAT == 10, na.rm = TRUE))
+finance_no_jobs <- data_finance_retail_no_jobs %>%
   filter(indname == 'Finance and Insurance, and Real Estate and Rental and Leasing')
 
-```
+retail_no_jobs <- data_finance_retail_no_jobs%>%
+  filter(indname == 'Retail Trade')
 
-```{r}
-did_r<- feols(log(no_employed) ~ covid, data = data_retail)
-
-etable(did_r)
 ```
 
 In the presence of Covid, the number of employees in the retail industry is 27.02% lower then prior to Covid.
 
-```{r}
-did_fr <- feols(log(no_employed) ~ indname + covid + indname * covid, data = data_finance)
-
-etable(did_fr)
-```
-
-The presence of covid is associated with a 4.24% lager drop in employment for the retail industry than for the finance and real estate industries.
+The presence of Covid is associated with a 4.24% lager drop in employment for the retail industry than for the finance and real estate industries.
 
 ```{r}
-did_f<- did_r<- feols(log(no_employed) ~ covid, data = data_only_finance)
+finance_health<- feols(log(no_employed) ~ covid, data = finance_no_jobs)
+retail_health <- feols(log(no_employed) ~ covid, data = retail_no_jobs)
+fin_v_retail_health<- feols(log(no_employed) ~ covid + indname + covid*indname, data = data_finance_retail_no_jobs)
 
-etable(did_f)
+etable(retail_health, fin_v_retail_health, finance_health)
 
 ```
 
-In the presence of Covid, the employment in the finance industry is 22.27% lower than prior to covid.
+# Retail vs Info 
+
+Read in Cleaned Data
+
+```{r}
+data_info <- read.csv('dataFinalRI.csv')
+
+```
+
+Add cutoff dates and assign treatment
+
+```{r}
+data_info_covid <- data_info%>%
+  mutate(covid = data_info$date > cutoff_date)
+
+data_info <- data_info_covid%>%
+  filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780'))))
+
+```
+
+```{r}
+data_info_retail_no_jobs <-data_info %>%
+  group_by(indname, date, covid) %>%
+  summarize(no_employed = sum(EMPSTAT == 10, na.rm = TRUE))
+
+info_no_jobs <- data_info_retail_no_jobs %>%
+  filter(indname == 'Information')
+```
+
+CORRECT: In the presence of Covid, there is a 19.18% decrease in the log number of employees in the retail industry.
+
+The presence of covid is associated with a 7.92% greater drop in employment for the retail industry than for the information services industry.
+
+```{r}
+info_health <- feols(log(no_employed) ~ covid, data = info_no_jobs)
+r_v_i_health <- feols(log(no_employed) ~ indname + covid + indname * covid, data = data_info_retail_no_jobs)
+retail_health <- feols(log(no_employed) ~ covid, data = retail_no_jobs)
+
+etable(retail_health, r_v_i_health, info_health)
+```
+
+The presence of Covid is associated with a 11.26% drop in employment in the information industry.
+
+# House Hold Income Comparison
+
+```{r}
+
+data_info_finc <- data_info_covid%>%
+  filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780'))))%>%
+  filter(!(FAMINC%in% (c('995','996','997','998','999'))))
+
+data_finance_finc <- data_finance_covid%>%
+  filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780', '7080', '7181', '7190'))))%>%
+  filter(!(FAMINC%in% (c('995','996','997','998','999'))))
+```
+
+```{r}
+data_finance_finc <- data_finance_finc %>%
+  group_by(FAMINC) %>%
+  mutate(Low = if_else(FAMINC < 720, 1, 0)) %>%
+  mutate(Middle = if_else(FAMINC > 720 & FAMINC <= 841, 1, 0)) %>%
+  mutate(High = if_else(FAMINC > 841 & FAMINC <= 843, 1, 0))
+
+data_info_finc <- data_info_finc %>%
+  group_by(FAMINC) %>%
+  mutate(Low = if_else(FAMINC < 720, 1, 0)) %>%
+  mutate(Middle = if_else(FAMINC >= 720 & FAMINC < 840, 1, 0)) %>%
+  mutate(High = if_else(FAMINC > 840 & FAMINC <= 843, 1, 0))
+```
+
+```{r}
+counts_fin <- data_finance_finc%>%
+  group_by(indname, covid, date)%>%
+  summarise(no_high = sum(High == 1, na.rm = TRUE),no_mid = sum(Middle == 1, na.rm = TRUE),no_low = sum(Low == 1, na.rm = TRUE))
+
+counts_info <- data_info_finc%>%
+  group_by(indname, covid, date)%>%
+  summarise(no_high = sum(High == 1, na.rm = TRUE),no_mid = sum(Middle == 1, na.rm = TRUE),no_low = sum(Low == 1, na.rm = TRUE))
+
+```
+
+```{r}
+reg_low_info <- 
+  feols(Low ~ covid + indname + covid*indname, data = data_info_finc)
+reg_mid_info<-
+  feols(Middle ~ covid + indname + covid*indname  , data = data_info_finc)
+reg_high_info<-
+  feols(High ~ covid + indname + covid*indname , data = data_info_finc)
+
+etable(reg_low_info, reg_mid_info, reg_high_info)
+```
+
+```{r}
+reg_low_finance <- feols(Low ~ covid + indname + covid*indname, data = data_finance_finc)
+reg_mid_finance <- feols(Middle ~ covid + indname + covid*indname, data = data_finance_finc)
+reg_high_finance <- feols(High ~ covid + indname + covid*indname, data = data_finance_finc)
+
+etable(reg_low_finance, reg_mid_finance, reg_high_finance)
+```
