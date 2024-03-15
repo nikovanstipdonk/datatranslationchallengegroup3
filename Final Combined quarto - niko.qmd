@@ -1,0 +1,202 @@
+---
+title: "Data Translation Challenge Quarto"
+format: html
+editor: visual
+---
+
+```{r}
+library(rio)
+library(tidyverse)
+library(vtable)
+library(dplyr)
+library(lubridate)
+library(fixest)
+library(ggplot2)
+
+```
+
+Libraries
+
+# Health of Retail Vs. Real Estate and Finance
+
+```{r}
+data_finance <- read.csv('dataFinalFIRR.csv')
+
+cutoff_date <- ('2020-03-01')
+
+data_finance_covid <- data_finance %>%
+  mutate(covid = data_finance$date > cutoff_date)
+
+data_finance <- data_finance_covid%>%
+  filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780', '7080', '7181', '7190'))))
+```
+
+Filtering out the Rental Real Estate jobs, as the assumption is that rental based real estate dropped drastically as people fled the cities due to shutdowns. We also saw that house prices rose substantially during the pandemic so the assumption is that people who lost their jobs in other sectors may be inclined to try real estate. We also decided to include typical finance as it is a highly paid industry that theoretically could handle remote work quite well.
+
+```{r}
+data_finance_retail_no_jobs <- data_finance %>%
+  group_by(indname, date, covid) %>%
+  summarize(no_employed = sum(EMPSTAT == 10, na.rm = TRUE))
+finance_no_jobs <- data_finance_retail_no_jobs %>%
+  filter(indname == 'Finance and Insurance, and Real Estate and Rental and Leasing')
+
+retail_no_jobs <- data_finance_retail_no_jobs%>%
+  filter(indname == 'Retail Trade')
+
+```
+
+In the cell above, we summed the total jobs per month per industry to create a monthly snapshot of employment in that industry that we could use to establish a baseline level of health. We then isolated the data by industry to see how the total number of jobs changed in the presence of covid.
+
+### Finance vs. Retail Health Regressions
+
+```{r}
+finance_health<- feols(log(no_employed) ~ covid, data = finance_no_jobs)
+retail_health <- feols(log(no_employed) ~ covid, data = retail_no_jobs)
+fin_v_retail_health<- feols(log(no_employed) ~ covid + indname + covid*indname, data = data_finance_retail_no_jobs)
+
+etable(finance_health, retail_health, fin_v_retail_health)
+
+```
+
+In the first regression, finance_health, we used the isolated data frame with financial jobs to see how the log number of jobs changed in the presence of covid. We did the same with retail in our second regression and in our third we used a type of difference in difference regression to see how the difference in how the presence of covid affected the health of the retail and finance industries as proxied by employment.
+
+Our regressions found that in the presence of covid the number of employees in the retail industry dropped by 19.36%. In the finance and real estate industry, we found a similar decrease, albeit less severe, of 15.53% decrease in employment. The difference in difference regression found a 3.84 percentage point difference between the industries, suggesting that the retail industry was more affected by the effects of covid. We decided to log the number of jobs because it would give us the impact of covid proprtional to their pre covid mean.
+
+# Health of Retail vs Information
+
+Read in Cleaned Data
+
+```{r}
+data_info <- read.csv('dataFinalRI.csv')
+
+```
+
+Add cutoff dates and assign treatment
+
+```{r}
+data_info_covid <- data_info%>%
+  mutate(covid = data_info$date > cutoff_date)
+
+data_info <- data_info_covid%>%
+  filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780'))))
+
+```
+
+Filtering out the information jobs not associated with tech as the assumption is that tech based employment skyrocketed during the pandemic because of the increased demand for remote technology and the ease of working from home. We also know that employment in big tech skyrocketed, but the issue we have here is identification. Does Amazon count for retail trade jobs? How are employees in AWS counted on the survey data. In order to try and account for this, we limited the information data to occupations that involve web based or technology based information services. Part of what we removed were jobs in the entertainment industry (movies and tv shows), non web-based broadcasting like those who worked in radio.
+
+```{r}
+data_info_retail_no_jobs <-data_info %>%
+  group_by(indname, date, covid) %>%
+  summarize(no_employed = sum(EMPSTAT == 10, na.rm = TRUE))
+
+info_no_jobs <- data_info_retail_no_jobs %>%
+  filter(indname == 'Information')
+```
+
+### Information vs. Retail Health Regressions
+
+```{r}
+info_health <- feols(log(no_employed) ~ covid, data = info_no_jobs)
+r_v_i_health <- feols(log(no_employed) ~ indname + covid + indname * covid, data = data_info_retail_no_jobs)
+retail_health <- feols(log(no_employed) ~ covid, data = retail_no_jobs)
+
+etable(info_health, retail_health, r_v_i_health)
+```
+
+As with the previous section, here we ran regressions to see how the number of jobs in the retail and information industries changed in the presence of covid. We logged the number of jobs because in our data there were almost 10x the amount of retail jobs than there were information jobs.
+
+We found the same percent loss in employment in retail as in the previous section of 19.36%. Unlike in the Financial sector, the health of the information industry fell by only 9.72%. Our pseudo difference in difference regression found that the retail industry shrank by 9.64 percentage points more than than the information industry.
+
+# House Hold Income Comparison
+
+```{r}
+
+data_info_finc <- data_info_covid%>%
+  filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780'))))%>%
+  filter(!(FAMINC%in% (c('995','996','997','998','999'))))
+
+data_finance_finc <- data_finance_covid%>%
+  filter(!(IND %in% (c('6470', '6480', '6570', '6590', '6670', '6780', '7080', '7181', '7190'))))%>%
+  filter(!(FAMINC%in% (c('995','996','997','998','999'))))
+```
+
+Because there is no individual income variable in the IPUMS data, we had to approximate how covid
+
+income by using Household income brackets to proxy for changes in income.
+
+```{r}
+data_finance_finc <- data_finance_finc %>%
+  group_by(FAMINC) %>%
+  mutate(Low = if_else(FAMINC < 720, 1, 0)) %>%
+  mutate(Middle = if_else(FAMINC >= 720 & FAMINC <= 841, 1, 0)) %>%
+  mutate(High = if_else(FAMINC > 841 & FAMINC <= 843, 1, 0))
+  
+
+data_info_finc <- data_info_finc %>%
+  group_by(FAMINC) %>%
+  mutate(Low = if_else(FAMINC < 720, 1, 0)) %>%
+  mutate(Middle = if_else(FAMINC >= 720 & FAMINC <= 841, 1, 0)) %>%
+  mutate(High = if_else(FAMINC > 841 & FAMINC <= 843, 1, 0))
+```
+
+```{r}
+data_finance_finc <- data_finance_finc %>% mutate(category = case_when(Low == 1 & Middle == 0 & High == 0 ~ "Low", Low == 0 & Middle == 1 & High == 0 ~ "Middle", Low == 0 & Middle == 0 & High == 1 ~ "High", TRUE ~ 'Other'))
+
+data_info_finc <- data_info_finc %>% mutate(category = case_when(Low == 1 & Middle == 0 & High == 0 ~ "Low", Low == 0 & Middle == 1 & High == 0 ~ "Middle", Low == 0 & Middle == 0 & High == 1 ~ "High", TRUE ~ 'Other'))
+```
+
+We defined Low, Middle, and High income based on the distribution of household income in the United States. Unfortunate, the distribution did not match our brackets perfectly but we were able to sort it so that low income is for any household that brings in less than \$30,000 annually. We defined middle income as any household that makes between \$30,000 and \$99,999 a year. High income housholds were considered to be those who made in excess of \$100,000 a year.
+
+```{r}
+counts_fin <- data_finance_finc%>%
+  group_by(indname, covid, date)%>%
+  summarise(no_high = sum(High == 1, na.rm = TRUE),no_mid = sum(Middle == 1, na.rm = TRUE),no_low = sum(Low == 1, na.rm = TRUE))
+
+counts_info <- data_info_finc%>%
+  group_by(indname, covid, date)%>%
+  summarise(no_high = sum(High == 1, na.rm = TRUE),no_mid = sum(Middle == 1, na.rm = TRUE),no_low = sum(Low == 1, na.rm = TRUE))
+
+```
+
+Counts_fin and counts_info both count the number of observations per date and per industry of each income bracket. These data frames help us to see how the number of high, medium, and low paying jobs, changed in response to covid. We know that all of these industries shrank in terms of employment due to covid, but for those who remained employed this can help us find how their incomes changed.
+
+### Income Bracket Change in Information Vs. Retail
+
+```{r}
+reg_low_info <- 
+  feols(Low ~ covid + indname + covid*indname, data = data_info_finc)
+reg_mid_info<-
+  feols(Middle ~ covid + indname + covid*indname  , data = data_info_finc)
+reg_high_info<-
+  feols(High ~ covid + indname + covid*indname , data = data_info_finc)
+
+etable(reg_low_info, reg_mid_info, reg_high_info)
+```
+
+The regressions above show the relative difference in probability between being assigned to the low, medium, or high income bracket after covid in the retail and information industry. The coefficient on the constant shows the likelihood of being placed into the the respective income bracket for an information industry employee prior to covid. The coefficient on CovidTRUE is the difference between the likelihood of being in the information industry and being low income before and after covid. For the low regression, this suggests that the likelihood of an information industry employee being in the low income bracket before covid is 2.23 percentage points greater than after covid. This suggests that low earning information sector employees who kept their jobs saw an increase in wages. The same can be said for medium income information sector employees, as the likelihood of being a middle income employee in information decreased by 3.05 percentage points for those who kept their jobs during covid. For high earning employees, the CovidTRUE coefficient suggests that that likelihood of being a high income employee in the information industry increased by roughly 5.41 percentage points after covid.
+
+The coefficient on indnameRetailTrade represents the difference in the probability being placed in the low income bracket before covid for the retail and information industries. For low income employees in the retail industry their probabilbity of being low income was 10.86 percentage points greater than for those in the information industry prior to covid. Employees in the retail industry were 12.44 percentage points more likely to be middle income prior to covid than information industry employees. But for high income employees, those in the information industry were 23.30 percentage points more likely to be placed into the high income bracket prior to covid.
+
+The coefficient on the interaction between covidTRUE and indnameRetailTrade is the difference in the difference between being assigned a given income bracket for
+
+```{r}
+reg_low_finance <- feols(Low ~ covid + indname + covid*indname, data = data_finance_finc)
+reg_mid_finance <- feols(Middle ~ covid + indname + covid*indname, data = data_finance_finc)
+reg_high_finance <- feols(High ~ covid + indname + covid*indname, data = data_finance_finc)
+
+etable(reg_low_finance, reg_mid_finance, reg_high_finance)
+```
+
+## Visualizations
+
+```{r}
+ggplot(data_finance_retail_no_jobs, aes(x= date, y = no_employed, color = as.factor(indname))) + geom_point() + scale_x_discrete(breaks = data_finance_retail_no_jobs$date[seq(5, length(data_finance_retail_no_jobs$date), by = 20)]) + theme_minimal() + labs(title = "Number of Employed Individuals Over Time", x = "Date", y = "Number of Employed", color = "Industry") + theme(text = element_text(size = 10)) + theme(legend.position = "bottom") + geom_smooth(method = "lm", se = FALSE, aes(group = indname))
+```
+
+```{r}
+ggplot(data_info_retail_no_jobs, aes(x = date, y = log(no_employed), color = factor(covid))) + geom_point(aes(shape = factor(covid)), alpha = 0.6) + geom_line(aes(group = interaction(indname, covid)), alpha = 0.6) + geom_smooth(method = "loess", aes(group = indname), se = FALSE, color = "black") +  scale_color_manual(values = c("FALSE" = "blue", "TRUE" = "red")) +  labs(title = "Trends in Unemployment in Information and Retail Industries Over Time",x = "Date",y = "Logarithm of Number of Unemployed",color = "Period",shape = "Period") +  facet_wrap(~indname) + theme_minimal() + theme(legend.position = "bottom") + scale_x_discrete(breaks = data_info_retail_no_jobs$date[seq(1, length(data_info_retail_no_jobs$date), by = 35)])
+```
+
+```{r}
+ggplot(data_finance_finc, aes(x = date, y = category, color = factor(category))) + scale_color_manual(values = c("Low" = 'red', "Middle" = "purple", "High" = 'blue' )) + geom_col(stat='identity') +  labs(title = "Proportion of Income Brackets Over Time",x = "Date",y = "Income Brackets", color = "Brackets") + scale_x_discrete(breaks = data_finance_finc$date[seq(20, length(data_finance_finc$date), by = 100)]) + theme(axis.text.x = element_blank())
+```
