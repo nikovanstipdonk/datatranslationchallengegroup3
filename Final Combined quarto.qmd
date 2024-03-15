@@ -17,6 +17,8 @@ library(ggplot2)
 
 Libraries
 
+#### 
+
 # Health of Retail Vs. Real Estate and Finance
 
 ```{r}
@@ -173,11 +175,15 @@ reg_high_info<-
 etable(reg_low_info, reg_mid_info, reg_high_info)
 ```
 
-The regressions above show the relative difference in probability between being assigned to the low, medium, or high income bracket after covid in the retail and information industry. The coefficient on the constant shows the likelihood of being placed into the the respective income bracket for an information industry employee prior to covid. The coefficient on CovidTRUE is the difference between the likelihood of being in the information industry and being low income before and after covid. For the low regression, this suggests that the likelihood of an information industry employee being in the low income bracket before covid is 2.23 percentage points greater than after covid. This suggests that low earning information sector employees who kept their jobs saw an increase in wages. The same can be said for medium income information sector employees, as the likelihood of being a middle income employee in information decreased by 3.05 percentage points for those who kept their jobs during covid. For high earning employees, the CovidTRUE coefficient suggests that that likelihood of being a high income employee in the information industry increased by roughly 5.41 percentage points after covid.
+The regressions above show the relative difference in probability between being assigned to the low, medium, or high income bracket after covid in the retail and information industry. The coefficient on the constant shows the likelihood of being placed into the the respective income bracket for an information industry employee prior to covid.
 
-The coefficient on indnameRetailTrade represents the difference in the probability being placed in the low income bracket before covid for the retail and information industries. For low income employees in the retail industry their probabilbity of being low income was 10.86 percentage points greater than for those in the information industry prior to covid. Employees in the retail industry were 12.44 percentage points more likely to be middle income prior to covid than information industry employees. But for high income employees, those in the information industry were 23.30 percentage points more likely to be placed into the high income bracket prior to covid.
+The coefficient on CovidTRUE is the difference between the likelihood of being in the information industry and being at a given income bracket income before and after covid. For the low regression, this suggests that the likelihood of an information industry employee being in the low income bracket before covid is 2.23 percentage points greater than after covid. This suggests that low earning information sector employees who kept their jobs saw an increase in wages. The same can be said for medium income information sector employees, as the likelihood of being a middle income employee in information decreased by 3.05 percentage points for those who kept their jobs during covid. For high earning employees, the CovidTRUE coefficient suggests that that likelihood of being a high income employee in the information industry increased by roughly 5.41 percentage points after covid.
 
-The coefficient on the interaction between covidTRUE and indnameRetailTrade is the difference in the difference between being assigned a given income bracket for
+The coefficient on indnameRetailTrade represents the difference in the probability being placed in the low income bracket before covid for the retail and information industries. For employees in the retail industry their probabilbity of being low income was 10.86 percentage points greater than for those in the information industry prior to covid. Employees in the retail industry were 12.44 percentage points more likely to be middle income prior to covid than information industry employees. But for high income employees, those in the information industry were 23.30 percentage points more likely to be placed into the high income bracket prior to covid.
+
+The coefficient on the interaction between covidTRUE and indnameRetailTrade for the low income regressionis the percentage point difference between the difference in probability for low income employees in the retail and information industries to be assigned low income in the presence of covid. This means the effect of covid on the likelihood in being assigned low income was 0.21 percentage points greater for those in the information industry than for those in the retail industry. Likewise the effect of covid on the likelihood being assigned high income was 1.15 percentage points greater for those in the information industry than for the retail trade. However, the effect of covid on the change in likelihood of being assigned to the middle income bracket was 1.36 percentage points greater for those in the retail industry than for those in the information industry.
+
+Overall, this suggests that the impact of covid on wages, proxied by the liklihood of being assigned the high, medium or low income bracket based on household income, was greater for low and high income employees in the information industry than for those in the retail industry. But the effect on the liklihood of being assigned medium income was greater for those in the retail industry than for those in the information industry.
 
 ```{r}
 reg_low_finance <- feols(Low ~ covid + indname + covid*indname, data = data_finance_finc)
