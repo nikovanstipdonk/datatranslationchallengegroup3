@@ -17,14 +17,22 @@ library(ggplot2)
 
 Libraries
 
-#### 
+#### Assumptions:
+
+1.) When measuring industry health by jobs we assumed any empstat == 10 meant the observation was fully employed in the industry at the time of the survey
+
+2.) When trying to find who gained income during the pandemic, we used household income to proxy for personal income. Because of how the data was recorded, we had to make income brackets high middle low that roughly correspond to the distribution of household income within the US.
+
+3.) The cutoff date of march first 2020 assumes that all observations taken after are impacted by covid and covid shutdowns. We know this to be source of error as many states shut down at different times. But because all the shutdowns happened between late February and early March, we decided to to treat march as the cutoff date.
+
+4.) We assume that information can serve as a proxy for the technology sector, although when checking employment statistics and the actual job codes of the IPUMS data we can see how many tech related jobs are counted under various industries. It would have been too intensive to locate each individual code that dealt with technology so we decided to use information to proxy for tech.
+
+5.) Because of the psuedo-difference in differences approach we do not need to satisfy many of the assumptions inherent in did such as parallel trends or identifying a control group. Since we are concerned only with the change in health and change in income relative to retail
 
 # Health of Retail Vs. Real Estate and Finance
 
 ```{r}
 data_finance <- read.csv('dataFinalFIRR.csv')
-
-cutoff_date <- ('2020-03-01')
 
 data_finance_covid <- data_finance %>%
   mutate(covid = data_finance$date > cutoff_date)
@@ -62,7 +70,9 @@ etable(finance_health, retail_health, fin_v_retail_health)
 
 In the first regression, finance_health, we used the isolated data frame with financial jobs to see how the log number of jobs changed in the presence of covid. We did the same with retail in our second regression and in our third we used a type of difference in difference regression to see how the difference in how the presence of covid affected the health of the retail and finance industries as proxied by employment.
 
-Our regressions found that in the presence of covid the number of employees in the retail industry dropped by 19.36%. In the finance and real estate industry, we found a similar decrease, albeit less severe, of 15.53% decrease in employment. The difference in difference regression found a 3.84 percentage point difference between the industries, suggesting that the retail industry was more affected by the effects of covid. We decided to log the number of jobs because it would give us the impact of covid proprtional to their pre covid mean.
+Our regressions found that in the presence of covid the number of employees in the retail industry dropped by 19.36%. In the finance and real estate industry, we found a similar decrease, albeit less severe, of 15.53% decrease in employment. The difference in difference regression found a 3.84 percentage point difference between the industries, suggesting that the retail industry was more affected by covid. We decided to log the number of jobs because it would give us the impact of covid proprtional to their pre covid means.
+
+Overall, when comapring the health of the retail trade industry versus the information and finance & real estate industries we find that covid had a modest, but significant negative impact on the health of the Retail Industry when compared to other industries.
 
 # Health of Retail vs Information
 
@@ -107,7 +117,7 @@ etable(info_health, retail_health, r_v_i_health)
 
 As with the previous section, here we ran regressions to see how the number of jobs in the retail and information industries changed in the presence of covid. We logged the number of jobs because in our data there were almost 10x the amount of retail jobs than there were information jobs.
 
-We found the same percent loss in employment in retail as in the previous section of 19.36%. Unlike in the Financial sector, the health of the information industry fell by only 9.72%. Our pseudo difference in difference regression found that the retail industry shrank by 9.64 percentage points more than than the information industry.
+We found the same percent loss in employment in retail as in the previous section of 19.36% . Unlike in the Financial sector, the health of the information industry fell by only 9.72%. Our pseudo difference in difference regression found that the retail industry shrank by 9.64 percentage points more than than the information industry.
 
 # House Hold Income Comparison
 
@@ -181,7 +191,7 @@ The coefficient on CovidTRUE is the difference between the likelihood of being i
 
 The coefficient on indnameRetailTrade represents the difference in the probability being placed in the low income bracket before covid for the retail and information industries. For employees in the retail industry their probabilbity of being low income was 10.86 percentage points greater than for those in the information industry prior to covid. Employees in the retail industry were 12.44 percentage points more likely to be middle income prior to covid than information industry employees. But for high income employees, those in the information industry were 23.30 percentage points more likely to be placed into the high income bracket prior to covid.
 
-The coefficient on the interaction between covidTRUE and indnameRetailTrade for the low income regressionis the percentage point difference between the difference in probability for low income employees in the retail and information industries to be assigned low income in the presence of covid. This means the effect of covid on the likelihood in being assigned low income was 0.21 percentage points greater for those in the information industry than for those in the retail industry. Likewise the effect of covid on the likelihood being assigned high income was 1.15 percentage points greater for those in the information industry than for the retail trade. However, the effect of covid on the change in likelihood of being assigned to the middle income bracket was 1.36 percentage points greater for those in the retail industry than for those in the information industry.
+The coefficient on the interaction between covidTRUE and indnameRetailTrade for the low income regression is the percentage point difference between the difference in probability for low income employees in the retail and information industries to be assigned low income in the presence of covid. This means the effect of covid on the likelihood in being assigned low income was 0.21 percentage points greater for those in the information industry than for those in the retail industry. Likewise the effect of covid on the likelihood being assigned high income was 1.15 percentage points greater for those in the information industry than for the retail trade. However, the effect of covid on the change in likelihood of being assigned to the middle income bracket was 1.36 percentage points greater for those in the retail industry than for those in the information industry.
 
 Overall, this suggests that the impact of covid on wages, proxied by the liklihood of being assigned the high, medium or low income bracket based on household income, was greater for low and high income employees in the information industry than for those in the retail industry. But the effect on the liklihood of being assigned medium income was greater for those in the retail industry than for those in the information industry.
 
