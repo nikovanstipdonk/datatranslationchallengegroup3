@@ -192,3 +192,35 @@ reg_high_finance <- feols(High ~ covid + indname + covid*indname, data = data_fi
 
 etable(reg_low_finance, reg_mid_finance, reg_high_finance)
 ```
+
+The regressions above show the relative difference in probability between being assigned to the low, medium, or high income bracket after covid in the retail and Finance & Real Estate industry. The coefficient on the constant shows the likelihood of being placed into the the respective income bracket for an information industry employee prior to covid.
+
+The coefficient on CovidTRUE is the difference between the likelihood of being in the Finance industry and being at a given income bracket income before and after covid. For the low regression, this suggests that the likelihood of a finance industry employee being in the low income bracket before covid is 1.39 percentage points fewr than after covid. This suggests that low earning information sector employees who kept their jobs saw an decrease in wages. The same can be said for medium income finance sector employees, as the likelihood of being a middle income employee in finance decreased by 2.43 percentage points for those who kept their jobs during covid. For high earning employees, the CovidTRUE coefficient suggests that that likelihood of being a high income employee in the finance sector industry increased by roughly 3.82 percentage points after covid.
+
+The coefficient on indnameRetailTrade represents the difference in the probability being placed in the low income bracket before covid for the retail and finance industries. For employees in the retail industry their probabilbity of being low income was 11.15 percentage points greater than for those in the finance industry prior to covid. Employees in the retail industry were 11.10 percentage points more likely to be middle income prior to covid than finance sector employees. But for high income employees, those in the finance sector were 22.25 percentage points more likely to be placed into the high income bracket prior to covid.
+
+The coefficient on the interaction between covidTRUE and indnameRetailTrade for the low income regressions are the percentage point difference between the difference in probability for employees in the retail and finance industries to be assigned low income in the presence of covid. This means the effect of covid on the likelihood in being assigned low income was 1.18 percentage points greater for those in the finance industry than for those in the retail industry. Likewise, the effect of covid on the change in likelihood of being assigned to the middle income bracket was 1.33 percentage points greater for those in the retail industry than for those in the finance industry. However the effect of covid on the likelihood being assigned high income was 0.15 percentage points greater for those in the finance industry than for the retail trade.
+
+Overall, this suggests that the impact of covid on wages, proxied by the liklihood of being assigned the high, medium or low income bracket based on household income, was greater for low and medium income employees in the retail industry than for those in the finance. But the effect on the liklihood of being assigned high income was greater for those in the fianance than for those in the retail industry.
+
+```{r}
+## Visualizations
+
+
+ggplot(data_finance_retail_no_jobs, aes(x= date, y = no_employed, color = as.factor(indname))) + geom_point() + scale_x_discrete(breaks = data_finance_retail_no_jobs$date[seq(5, length(data_finance_retail_no_jobs$date), by = 20)]) + theme_minimal() + labs(title = "Number of Employed Individuals Over Time", x = "Date", y = "Number of Employed", color = "Industry") + theme(text = element_text(size = 10)) + theme(legend.position = "bottom") + geom_smooth(method = "lm", se = FALSE, aes(group = indname))
+
+
+
+```
+
+```{r}
+ggplot(data_info_retail_no_jobs, aes(x = date, y = log(no_employed), color = factor(covid))) + geom_point(aes(shape = factor(covid)), alpha = 0.6) + geom_line(aes(group = interaction(indname, covid)), alpha = 0.6) + geom_smooth(method = "loess", aes(group = indname), se = FALSE, color = "black") +  scale_color_manual(values = c("FALSE" = "blue", "TRUE" = "red")) +  labs(title = "Trends in Unemployment in Information and Retail Industries Over Time",x = "Date",y = "Logarithm of Number of Unemployed",color = "Period",shape = "Period") +  facet_wrap(~indname) + theme_minimal() + theme(legend.position = "bottom") + scale_x_discrete(breaks = data_info_retail_no_jobs$date[seq(1, length(data_info_retail_no_jobs$date), by = 35)])
+
+```
+
+```{r}
+
+
+
+ggplot(data_finance_finc, aes(x = date, y = category, color = factor(category))) + scale_color_manual(values = c("Low" = 'red', "Middle" = "purple", "High" = 'blue' )) + geom_col(stat='identity') +  labs(title = "Proportion of Income Brackets Over Time",x = "Date",y = "Income Brackets", color = "Brackets") + scale_x_discrete(breaks = data_finance_finc$date[seq(20, length(data_finance_finc$date), by = 100)]) + theme(axis.text.x = element_blank())
+```
